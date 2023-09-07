@@ -1,0 +1,17 @@
+[0m[[0m[33mwarn[0m] [0m[0m/scratch/sakim/chipyard-spad/generators/spica/src/main/scala/spica/DMA.scala:122:61: method apply in object TLClientParameters is deprecated: Use TLMasterParameters.v1 instead of TLClientParameters[0m
+[0m[[0m[33mwarn[0m] [0m[0m  val node = TLClientNode(Seq(TLMasterPortParameters.v1(Seq(TLClientParameters([0m
+[0m[[0m[33mwarn[0m] [0m[0m                                                            ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/scratch/sakim/chipyard-spad/generators/spica/src/main/scala/spica/DMA.scala:211:18: value DataMirror in package experimental is deprecated (since Chisel 3.6): This value has moved to chisel3.reflect[0m
+[0m[[0m[33mwarn[0m] [0m[0m      val tl_a = DataMirror.internal.chiselTypeClone[TLBundleA](tl.a.bits)[0m
+[0m[[0m[33mwarn[0m] [0m[0m                 ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/scratch/sakim/chipyard-spad/generators/spica/src/main/scala/spica/DMA.scala:426:61: method apply in object TLClientParameters is deprecated: Use TLMasterParameters.v1 instead of TLClientParameters[0m
+[0m[[0m[33mwarn[0m] [0m[0m  val node = TLClientNode(Seq(TLMasterPortParameters.v1(Seq(TLClientParameters([0m
+[0m[[0m[33mwarn[0m] [0m[0m                                                            ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/scratch/sakim/chipyard-spad/generators/spica/src/main/scala/spica/DMA.scala:577:18: value DataMirror in package experimental is deprecated (since Chisel 3.6): This value has moved to chisel3.reflect[0m
+[0m[[0m[33mwarn[0m] [0m[0m      val tl_a = DataMirror.internal.chiselTypeClone[TLBundleA](tl.a.bits)[0m
+[0m[[0m[33mwarn[0m] [0m[0m                 ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/scratch/sakim/chipyard-spad/generators/spica/src/main/scala/spica/LoopUnroller.scala:26:24: type ChiselEnum in package experimental is deprecated (since Chisel 3.5): This type has moved to chisel3[0m
+[0m[[0m[33mwarn[0m] [0m[0m  object State extends ChiselEnum {[0m
+[0m[[0m[33mwarn[0m] [0m[0m                       ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m335 feature warnings; re-run with -feature for details[0m
+[0m[[0m[33mwarn[0m] [0m[0m6 warnings found[0m
