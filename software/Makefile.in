@@ -1,0 +1,47 @@
+prefix		:= @prefix@
+abs_top_srcdir	:= @abs_top_srcdir@
+XLEN            := @XLEN@
+RISCVTOOLS      := @RISCVTOOLS@
+ROCC = examples
+RUNNER         := "spike --extension=dma "
+
+.PHONY: all Scratchpad clean 
+all: Scratchpad 
+
+vars = \
+	abs_top_srcdir=$(abs_top_srcdir) \
+	XLEN=$(XLEN) \
+	PREFIX=$(ROCC)-$@ \
+	src_dir=$(abs_top_srcdir)/$@ \
+	RISCVTOOLS=$(RISCVTOOLS)
+
+scratchpad:
+	mkdir -p $@
+	$(MAKE) -C $@ -f $(abs_top_srcdir)/$@/Makefile $(vars)
+
+clean:
+	$(MAKE) -C scratchpad -f $(abs_top_srcdir)/scratchpad/Makefile abs_top_srcdir=$(abs_top_srcdir) PREFIX=$(ROCC)-scratchpad clean
+
+test-baremetal-bareMetalC:
+	make -C bareMetalC	\
+	        -f $(abs_top_srcdir)/bareMetalC/Makefile \
+                TARGET_MAKEFILE=$(abs_top_srcdir)/bareMetalC/Makefile \
+		abs_top_srcdir=$(abs_top_srcdir) \
+	 	src_dir=$(abs_top_srcdir)/bareMetalC \
+	 	XLEN=$(XLEN) \
+	 	PREFIX=$(ROCC)-bareMetalC \
+		RISCVTOOLS=$(RISCVTOOLS) \
+		RUNNER=$(RUNNER) \
+		run-baremetal
+
+test-baremetal: test-baremetal-bareMetalC
+	make -C scratchpad	\
+	        -f $(abs_top_srcdir)/scratchpad/Makefile \
+                TARGET_MAKEFILE=$(abs_top_srcdir)/scratchpad/Makefile \
+		abs_top_srcdir=$(abs_top_srcdir) \
+	 	src_dir=$(abs_top_srcdir)/scratchpad \
+	 	XLEN=$(XLEN) \
+	 	PREFIX=$(ROCC)-scratchpad \
+		RISCVTOOLS=$(RISCVTOOLS) \
+		RUNNER=$(RUNNER) \
+	        run-baremetal
