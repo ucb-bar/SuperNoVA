@@ -24,7 +24,6 @@ case class MemcpyConfig(
                          use_dedicated_tl_port: Boolean = true,
                          use_shared_ext_mem: Boolean = false,
                          use_shared_tlb: Boolean = true,
-                         //headerFileName: String = "dma_params.h" // ToDo
                                                        ) {
 
 }
