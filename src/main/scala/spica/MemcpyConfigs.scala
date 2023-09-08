@@ -1,16 +1,21 @@
 
-package spica
+package spica 
 
 import scala.math.{max, pow, sqrt}
 import chisel3._
 import chisel3.util._
 import freechips.rocketchip.tile._
 
+//sealed abstract trait GemminiMemCapacity
+//case class CapacityInKilobytes(kilobytes: Int) extends GemminiMemCapacity
+//case class CapacityInMatrices(matrices: Int) extends GemminiMemCapacity
+
+
 case class MemcpyConfig(
                          opcodes: OpcodeSet = OpcodeSet.custom1,
                          num_channel: Int = 4,
-                         queue_length: Int = 8,
-                         //max_in_flight_mem_reqs: Int = 8,
+                         queue_length: Int = 8, // command queue length
+                         nXact: Int = 4, // number of memory request that can be tracked
                          dma_buswidth: Int = 128,
                          dma_maxbyte: Int = 64,
                          tlb_size: Int = 4,
@@ -19,9 +24,7 @@ case class MemcpyConfig(
                          use_dedicated_tl_port: Boolean = true,
                          use_shared_ext_mem: Boolean = false,
                          use_shared_tlb: Boolean = true,
-                         headerFileName: String = "dma_params.h"
+                         //headerFileName: String = "dma_params.h" // ToDo
                                                        ) {
-
-
 
 }

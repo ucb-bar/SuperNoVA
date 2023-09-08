@@ -1,4 +1,4 @@
-package spica
+package spica 
 
 import chisel3._
 import chisel3.util._
@@ -64,8 +64,8 @@ class DecoupledTLB(entries: Int, maxSize: Int, use_firesim_simulation_counters: 
   when (interrupt && tlb.io.sfence.fire) {
     interrupt := false.B
   }
-  dontTouch(tlb.io.resp)
-  dontTouch(io.req.bits.status)
+  dontTouch(tlb.io.sfence)
+  dontTouch(io.exp)
 
   assert(!io.exp.flush_retry || !io.exp.flush_skip, "TLB: flushing with both retry and skip at same time")
 
