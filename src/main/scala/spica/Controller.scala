@@ -156,7 +156,7 @@ class MemcpyModule (outer: Memcpy)
       // immediately commit
       cmd_in_deq.ready := true.B
       val ch = cmd_in_deq.bits.rs1(4, 0) // ToDo: check
-      when(io.cmd.bits.inst.funct === PROBE_CMD) {
+      when(cmd_in_deq.bits.inst.funct === PROBE_CMD) {
         io.resp.valid := true.B
         io.resp.bits.data := channel(ch).state
         io.resp.bits.rd := cmd_in_deq.bits.inst.rd
