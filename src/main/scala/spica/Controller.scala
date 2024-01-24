@@ -21,6 +21,8 @@ class ChannelConfig(val addr_bitwidth: Int, val state_bitwidth: Int) extends Bun
   val source_base_addr = UInt(addr_bitwidth.W)
   val dest_base_addr = UInt(addr_bitwidth.W)
   val state = UInt(state_bitwidth.W)
+  val source_direct_dram = Bool()
+  val dest_direct_dram = Bool()
 }
 
 class MemcpyCmdBundle(data_bitwidth: Int, iterator_bitwidth: Int)(implicit p: Parameters) extends CoreBundle {
@@ -28,6 +30,8 @@ class MemcpyCmdBundle(data_bitwidth: Int, iterator_bitwidth: Int)(implicit p: Pa
   val dest_base_vaddr = UInt(coreMaxAddrBits.W)
   val source_stride = UInt(data_bitwidth.W)
   val dest_stride = UInt(data_bitwidth.W)
+  val source_direct_dram = Bool()
+  val dest_direct_dram = Bool()
 
   val status = new MStatus // ?
   val source_tile_offset = UInt(data_bitwidth.W)
@@ -40,6 +44,8 @@ class MemcpyCmdBundle(data_bitwidth: Int, iterator_bitwidth: Int)(implicit p: Pa
 class MemcpyReqBundle(data_bitwidth: Int)(implicit p: Parameters) extends CoreBundle {
   val source_vaddr = UInt(coreMaxAddrBits.W)
   val dest_vaddr = UInt(coreMaxAddrBits.W)
+  val source_direct_dram = Bool()
+  val dest_direct_dram = Bool()
   val num_bytes = UInt(log2Up(data_bitwidth*4 + 1).W)
 
   val status = new MStatus // ?
@@ -132,7 +138,8 @@ class MemcpyModule (outer: Memcpy)
     }.elsewhen(is_config) {
       val ch = cmd_in_deq.bits.rs1(4, 0)
       val stride = cmd_in_deq.bits.rs1 >> 5
-      val base_addr = cmd_in_deq.bits.rs2
+      val base_addr = cmd_in_deq.bits.rs2(62,0)
+      val direct_dram = cmd_in_deq.bits.rs2(63)
       cmd_in_deq.ready := true.B
       when(cmd_in_deq.fire) {
         when(cmd_in_deq.bits.inst.funct === CONFIG_SOURCE_CMD) {
@@ -141,12 +148,14 @@ class MemcpyModule (outer: Memcpy)
           channel(ch).source_stride := stride
           channel(ch).state := 0.U // Do we need this?
           tile_index := 0.U
+          channel(ch).source_direct_dram := direct_dram
         }.otherwise {
           // configuring dma
           channel(ch).dest_base_addr := base_addr
           channel(ch).dest_stride := stride
           channel(ch).state := 0.U // Do we need this?
           tile_index := 0.U
+          channel(ch).dest_direct_dram := direct_dram
         }
       }
       //io.resp <> DontCare
@@ -210,6 +219,8 @@ class MemcpyModule (outer: Memcpy)
       cmd.dest_stride := channel(ch).dest_stride
       cmd.dest_base_vaddr := channel(ch).dest_base_addr + raw_cmd.bits.rs2(55, 32)
       cmd.source_base_vaddr := channel(ch).source_base_addr + raw_cmd.bits.rs2(31, 0)
+      cmd.source_direct_dram := channel(ch).source_direct_dram
+      cmd.dest_direct_dram := channel(ch).dest_direct_dram
       cmd.source_tile_offset := raw_cmd.bits.rs1(16, 0)
       cmd.dest_tile_offset := raw_cmd.bits.rs1(33, 17)
       tile_index := raw_cmd.bits.rs1(59, 54)
@@ -222,6 +233,8 @@ class MemcpyModule (outer: Memcpy)
       cmd.cols := raw_cmd.bits.rs2(31, 0)
       cmd.source_base_vaddr := channel(ch).source_base_addr + raw_cmd.bits.rs2(63, 32)
       cmd.dest_base_vaddr := channel(ch).dest_base_addr + raw_cmd.bits.rs1(31, 0)
+      cmd.source_direct_dram := channel(ch).source_direct_dram
+      cmd.dest_direct_dram := channel(ch).dest_direct_dram
       cmd.source_stride := channel(ch).source_stride
       cmd.dest_stride := channel(ch).dest_stride
       tile_index := raw_cmd.bits.rs1(59, 52)

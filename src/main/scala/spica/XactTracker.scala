@@ -12,6 +12,7 @@ class XactTrackerEntry(maxShift: Int, maxReqBytes: Int,
   val shift = UInt(log2Up(maxShift).W)
   val bytes_to_read = UInt(log2Up(maxReqBytes+1).W)
   //val cmd_id = UInt(log2Up(nCmds).W)
+  val mvout_direct_dram = Bool()
   val mvout_addr = UInt(coreMaxAddrBits.W)
 }
 

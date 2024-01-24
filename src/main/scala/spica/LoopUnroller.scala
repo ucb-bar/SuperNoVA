@@ -80,6 +80,8 @@ class LoopUnroller(config: MemcpyConfig, dma_bitwidth: Int, dma_maxbyte: Int)(im
   io.out.valid := false.B
   io.out.bits.source_vaddr := source_vaddr
   io.out.bits.dest_vaddr := dest_vaddr
+  io.out.bits.source_direct_dram := req.source_direct_dram
+  io.out.bits.dest_direct_dram := req.dest_direct_dram
   io.out.bits.num_bytes := col_bytes
   io.out.bits.status := req.status
 

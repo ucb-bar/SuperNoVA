@@ -19,6 +19,8 @@ import midas.targetutils.SynthesizePrintf
 
 class StreamReadRequest()(implicit p: Parameters) extends CoreBundle {
   val vaddr = UInt(coreMaxAddrBits.W)
+  val direct_dram = Bool()
+  val dest_direct_dram = Bool()
   val dest_vaddr = UInt(coreMaxAddrBits.W) // TODO use LocalAddr in DMA
   val status = new MStatus
   val len = UInt(8.W) // TODO magic number
@@ -30,6 +32,7 @@ class StreamReadResponse(aligned_to: Int, beatBits: Int, maxBytes: Int)
                                    (implicit p: Parameters) extends CoreBundle {
   //val data = UInt(log2Ceil(beatBits).W)
   val dest_vaddr = UInt(coreMaxAddrBits.W)
+  val dest_direct_dram = Bool()
   val data = UInt(beatBits.W)
   val len = UInt(8.W) // TODO magic number
   //val last = Bool()
@@ -44,6 +47,7 @@ class StreamReadResponse(aligned_to: Int, beatBits: Int, maxBytes: Int)
 
 class StreamWriteRequest(val dataWidth: Int, val maxBytes: Int)(implicit p: Parameters) extends CoreBundle {
   val vaddr = UInt(coreMaxAddrBits.W)
+  val direct_dram = Bool()
   val data = UInt(dataWidth.W)
   val len = UInt(log2Up(maxBytes+1).W) // The number of bytes to write
   val block = UInt(8.W) // TODO magic number
@@ -86,6 +90,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
 
     val req = Reg(new StreamReadRequest())
     val vaddr = req.vaddr
+    val direct_dram = req.direct_dram
 
     val bytesRequested = Reg(UInt(log2Ceil(maxBytes).W)) // TODO this only needs to count up to (dataBytes/aligned_to), right?
     val bytesLeft = req.len - bytesRequested // len is byte length
@@ -162,6 +167,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     reserve.entry.shift := RegEnableThru(read_shift, untranslated_a.fire)
     reserve.entry.bytes_to_read := RegEnableThru(read_bytes_read, untranslated_a.fire)
     reserve.entry.mvout_addr := RegEnableThru(req.dest_vaddr, untranslated_a.fire)
+    reserve.entry.mvout_direct_dram := RegEnableThru(req.dest_direct_dram, untranslated_a.fire)
     /*
     when(untranslated_a.fire){
       reserve.entry.shift := read_shift
@@ -206,7 +212,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
 
     tl.a.valid := translate_q.io.deq.valid && !io.tlb.resp.miss
     tl.a.bits := translate_q.io.deq.bits.tl_a
-    tl.a.bits.address := io.tlb.resp.paddr
+    tl.a.bits.address := Mux(direct_dram, (1.U << (4+32)).asUInt + io.tlb.resp.paddr, io.tlb.resp.paddr)
 
     //val bytes_per_packet = Reg(Vec(max_blocks, UInt(log2Up(beatBytes+1).W)))
     //val bytes_total_packet = RegInit(0.U(log2Up(maxBytes+1).W))
@@ -245,6 +251,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     io.resp.bits.block := 0.U
     io.resp.bits.store_en := false.B
     io.resp.bits.dest_vaddr := 0.U
+    io.resp.bits.dest_direct_dram := false.B
 
 
     val last_resp_packet = WireInit(edge.last(tl.d))
@@ -272,6 +279,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     when(tl_d_fire){
       io.resp.valid := tl.d.valid
       io.resp.bits.dest_vaddr := xacttracker.io.peek.entry.mvout_addr
+      io.resp.bits.dest_direct_dram := xacttracker.io.peek.entry.mvout_direct_dram
       io.resp.bits.data := (tl.d.bits.data >> (xacttracker.io.peek.entry.shift * 8.U)).asUInt // shift in bits //tl.d.bits.data
       // ToDo: when it is not aligned to 16 bytes
       io.resp.bits.len := xacttracker.io.peek.entry.bytes_to_read
@@ -349,6 +357,7 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
     io.busy := xactBusy.orR || (state =/= s_idle)
 
     val vaddr = req.vaddr
+    val direct_dram = req.direct_dram
 
     // Select the size and mask of the TileLink request
     class Packet extends Bundle {
@@ -498,7 +507,8 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
 
     tl.a.valid := Mux(state === s_writing_beats, true.B, translate_q.io.deq.valid && !io.tlb.resp.miss && state === s_writing_new_block)
     tl.a.bits := Mux(state === s_writing_beats, Mux(write_full, putFull, putPartial), translate_q.io.deq.bits.tl_a)
-    tl.a.bits.address := RegEnableThru(io.tlb.resp.paddr, RegNext(io.tlb.req.fire))
+    val address = Mux(direct_dram, (1.U << (4+32)).asUInt + io.tlb.resp.paddr, io.tlb.resp.paddr)
+    tl.a.bits.address := RegEnableThru(address, RegNext(io.tlb.req.fire))
 
     tl.d.ready := xactBusy.orR
 
@@ -590,6 +600,8 @@ class DMA(config: MemcpyConfig)
     reader.module.io.req.bits.status := Mux(io.req.fire, io.req.bits.status, req.status)
     reader.module.io.req.bits.len := Mux(io.req.fire, io.req.bits.num_bytes, req.num_bytes)
     reader.module.io.req.bits.dest_vaddr := Mux(io.req.fire, io.req.bits.dest_vaddr, req.dest_vaddr) // fed dest vaddr to track
+    reader.module.io.req.bits.direct_dram := Mux(io.req.fire, io.req.bits.source_direct_dram, req.source_direct_dram)
+    reader.module.io.req.bits.dest_direct_dram := Mux(io.req.fire, io.req.bits.dest_direct_dram, req.dest_direct_dram)
     when(state === idle) {
       // to eliminate pipeline bubbles
       when(io.req.fire) { // it implies reader.module.io.req.ready true already
@@ -622,6 +634,7 @@ class DMA(config: MemcpyConfig)
     writer.module.io.req.bits.len := write_issue_q.bits.len //req.num_bytes
     writer.module.io.req.bits.block := write_issue_q.bits.block
     writer.module.io.req.bits.store_en := write_issue_q.bits.store_en
+    writer.module.io.req.bits.direct_dram := write_issue_q.bits.dest_direct_dram
 
     io.tlb(0) <> writer.module.io.tlb
     io.tlb(1) <> reader.module.io.tlb

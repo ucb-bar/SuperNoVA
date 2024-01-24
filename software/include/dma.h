@@ -40,11 +40,11 @@
 
 // base source & dest address, stride
 // mode: memcpy in / out
-#define dma_source_config(channel, source_addr, source_stride) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_DMA, ((uint64_t) source_stride << 5) | ((uint64_t) channel), source_addr, k_CONFIG_S)
+#define dma_source_config(channel, bypass_sbus, source_addr, source_stride) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_DMA, ((uint64_t) source_stride << 5) | ((uint64_t) channel), ((uint64_t) bypass_sbus << 63) | ((uint64_t) source_addr), k_CONFIG_S)
 
-#define dma_dest_config(channel, dest_addr, dest_stride) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_DMA, ((uint64_t) dest_stride << 5) | ((uint64_t) channel), dest_addr, k_CONFIG_D)
+#define dma_dest_config(channel, bypass_sbus, dest_addr, dest_stride) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_DMA, ((uint64_t) dest_stride << 5) | ((uint64_t) channel), ((uint64_t) bypass_sbus << 63) | ((uint64_t) dest_addr), k_CONFIG_D)
 
 // copy 1 tile
 // granted: return value whether DMA granted the requested ISA

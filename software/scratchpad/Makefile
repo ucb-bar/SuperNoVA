@@ -2,8 +2,9 @@ include $(abs_top_srcdir)/Makefrag
 
 tests = \
 	memcpy_cpu \
-	memcpy_dma_multi \
 	memcpy_dma \
+	memcpy_dma_multi \
+	memcpy_dma_channel \
 	#memcpy_conv_dma \
 	#memcpy_matmul_dma \
 
