@@ -622,19 +622,22 @@ class DMA(config: MemcpyConfig)
     }
 
     val dma_pipe_delay = 1 // ToDo
-    val write_issue_q = Queue(reader.module.io.resp)
-    write_issue_q.ready := writer.module.io.req.ready
-    reader.module.io.resp.ready := write_issue_q.ready
+    //val write_issue_q = Queue(reader.module.io.resp)
+    val write_issue_q = Module(new Queue(new StreamReadResponse(aligned_to, dataBits, maxBytes), 2))
 
+    write_issue_q.io.deq.ready := writer.module.io.req.ready
+    reader.module.io.resp.ready := write_issue_q.io.enq.ready
+    write_issue_q.io.enq.valid := reader.module.io.resp.valid
+    write_issue_q.io.enq.bits := reader.module.io.resp.bits
 
-    writer.module.io.req.valid := write_issue_q.valid
-    writer.module.io.req.bits.data := write_issue_q.bits.data
+    writer.module.io.req.valid := write_issue_q.io.deq.valid
+    writer.module.io.req.bits.data := write_issue_q.io.deq.bits.data
     writer.module.io.req.bits.status := req.status
-    writer.module.io.req.bits.vaddr := write_issue_q.bits.dest_vaddr // fed from reader
-    writer.module.io.req.bits.len := write_issue_q.bits.len //req.num_bytes
-    writer.module.io.req.bits.block := write_issue_q.bits.block
-    writer.module.io.req.bits.store_en := write_issue_q.bits.store_en
-    writer.module.io.req.bits.direct_dram := write_issue_q.bits.dest_direct_dram
+    writer.module.io.req.bits.vaddr := write_issue_q.io.deq.bits.dest_vaddr // fed from reader
+    writer.module.io.req.bits.len := write_issue_q.io.deq.bits.len //req.num_bytes
+    writer.module.io.req.bits.block := write_issue_q.io.deq.bits.block
+    writer.module.io.req.bits.store_en := write_issue_q.io.deq.bits.store_en
+    writer.module.io.req.bits.direct_dram := write_issue_q.io.deq.bits.dest_direct_dram
 
     io.tlb(0) <> writer.module.io.tlb
     io.tlb(1) <> reader.module.io.tlb
