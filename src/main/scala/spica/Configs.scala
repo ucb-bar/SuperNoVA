@@ -21,6 +21,7 @@ object MemcpyConfigs {
   val defaultConfig = MemcpyConfig(
     num_channel = 4,
     queue_length = 4,
+    nXact = 8,
     dma_buswidth = 128,
     dma_maxbyte = 64,
     tlb_size = 4,

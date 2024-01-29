@@ -6,11 +6,6 @@ import chisel3._
 import chisel3.util._
 import freechips.rocketchip.tile._
 
-//sealed abstract trait GemminiMemCapacity
-//case class CapacityInKilobytes(kilobytes: Int) extends GemminiMemCapacity
-//case class CapacityInMatrices(matrices: Int) extends GemminiMemCapacity
-
-
 case class MemcpyConfig(
                          opcodes: OpcodeSet = OpcodeSet.custom1,
                          num_channel: Int = 4,

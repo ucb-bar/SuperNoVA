@@ -28,19 +28,20 @@ class StreamReadRequest()(implicit p: Parameters) extends CoreBundle {
 
 }
 
-class StreamReadResponse(aligned_to: Int, beatBits: Int, maxBytes: Int)
+class StreamReadResponse(beatBits: Int, maxBytes: Int)
                                    (implicit p: Parameters) extends CoreBundle {
   //val data = UInt(log2Ceil(beatBits).W)
   val dest_vaddr = UInt(coreMaxAddrBits.W)
   val dest_direct_dram = Bool()
-  val data = UInt(beatBits.W)
+  //val data = UInt(beatBits.W)
+  val data = UInt((8*maxBytes).W)
   val len = UInt(8.W) // TODO magic number
   //val last = Bool()
   //val bytes_read = UInt(8.W) // TODO magic number
   // val cmd_id = UInt(8.W) // TODO magic number
-  val block = UInt(8.W)
+  //val block = UInt(8.W)
 
-  val store_en = Bool()
+  //val store_en = Bool()
   //val status = new MStatus
 }
 
@@ -48,12 +49,12 @@ class StreamReadResponse(aligned_to: Int, beatBits: Int, maxBytes: Int)
 class StreamWriteRequest(val dataWidth: Int, val maxBytes: Int)(implicit p: Parameters) extends CoreBundle {
   val vaddr = UInt(coreMaxAddrBits.W)
   val direct_dram = Bool()
-  val data = UInt(dataWidth.W)
+  val data = UInt((8*maxBytes).W)
   val len = UInt(log2Up(maxBytes+1).W) // The number of bytes to write
-  val block = UInt(8.W) // TODO magic number
+  //val block = UInt(8.W) // TODO magic number
   val status = new MStatus
 
-  val store_en = Bool()
+  //val store_en = Bool()
 }
 
 // TODO StreamReaderCore and StreamWriter are actually very alike. Is there some parent class they could both inherit from?
@@ -78,12 +79,12 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
 
     val io = IO(new Bundle {
       val req = Flipped(Decoupled(new StreamReadRequest()))
-      val resp = Decoupled(new StreamReadResponse(aligned_to, beatBits, maxBytes))
+      val resp = Decoupled(new StreamReadResponse(beatBits, maxBytes))
       val tlb = new FrontendTLBIO
       val flush = Input(Bool())
       val busy = Output(Bool())
     })
-    val xacttracker = Module(new XactTracker(nXacts, maxBytes, maxBytes))
+    val xacttracker = Module(new XactTracker(nXacts, beatBits, maxBytes, max_blocks))
 
     val (s_idle :: s_req_new_block :: Nil) = Enum(2)
     val state = RegInit(s_idle)
@@ -97,7 +98,6 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     //val bytesLeft = Mux(req.has_acc_bitwidth, req.len * (config.accType.getWidth / 8).U, req.len * (config.inputType.getWidth / 8).U) - bytesRequested
 
     val state_machine_ready_for_req = WireInit(state === s_idle)
-    io.req.ready := state_machine_ready_for_req
 
     // Select the size and mask of the TileLink request
     class Packet extends Bundle {
@@ -236,11 +236,11 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
       }
     }
 
-    //io.busy := (state =/= s_idle)
     io.busy := (state =/= s_idle) | xacttracker.io.busy
-    io.req.ready := state === s_idle
-    // initialize
+    io.req.ready := state === s_idle && xacttracker.io.is_free // only when there is an available entry
 
+    val (r_idle :: r_sending_request :: Nil) = Enum(2)
+    val r_state = RegInit(r_idle)
 
     // Forward TileLink read responses to the reservation buffer
     // tl.d.ready := io.beatData.ready
@@ -248,8 +248,8 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     // reset
     io.resp.bits.data := 0.U
     io.resp.bits.len := 0.U
-    io.resp.bits.block := 0.U
-    io.resp.bits.store_en := false.B
+    //io.resp.bits.block := 0.U
+    //io.resp.bits.store_en := false.B
     io.resp.bits.dest_vaddr := 0.U
     io.resp.bits.dest_direct_dram := false.B
 
@@ -263,7 +263,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
       //bytes_per_packet := VecInit(Seq.fill(max_blocks)(0.U))
       //bytes_total_packet := 0.U
       //packet_index := 0.U
-      io.req.ready := true.B
+      //io.req.ready := true.B
       when (io.req.fire){
         req := io.req.bits
         bytesRequested := 0.U
@@ -272,33 +272,55 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
       }
     }
     // response
-    tl.d.ready := io.resp.ready
-    val resp_xactid = tl.d.bits.source
-    xacttracker.io.peek.xactid := RegEnableThru(resp_xactid, tl_d_fire)
-    xacttracker.io.peek.pop := last_resp_packet && tl_d_fire
-    when(tl_d_fire){
-      io.resp.valid := tl.d.valid
-      io.resp.bits.dest_vaddr := xacttracker.io.peek.entry.mvout_addr
-      io.resp.bits.dest_direct_dram := xacttracker.io.peek.entry.mvout_direct_dram
-      io.resp.bits.data := (tl.d.bits.data >> (xacttracker.io.peek.entry.shift * 8.U)).asUInt // shift in bits //tl.d.bits.data
-      // ToDo: when it is not aligned to 16 bytes
-      io.resp.bits.len := xacttracker.io.peek.entry.bytes_to_read
-      //io.resp.bits.len := Mux(bytes_total_packet > beatBytes.asUInt, beatBytes.asUInt, bytes_total_packet - beatBytes.asUInt)  //bytes_per_packet(packet_index)
-      io.resp.bits.block := packet_index
-      //resp_data := resp_data + (tl.d.bits.data << loaded_bits).asUInt
+    tl.d.ready := true.B // io.resp.ready
 
+    reserve.value_valid := tl.d.valid
+    reserve.value_xactid := tl.d.bits.source
+    reserve.value := (tl.d.bits.data) // >> (xacttracker.io.peek.entry.shift * 8.U)).asUInt
+    reserve.store_en := last_resp_packet && tl_d_fire
+    reserve.blockid := packet_index
+
+    when(tl_d_fire){
+      //io.resp.valid := tl.d.valid
+      //io.resp.bits.data := (tl.d.bits.data >> (xacttracker.io.peek.entry.shift * 8.U)).asUInt // shift in bits //tl.d.bits.data
+      //io.resp.bits.len := Mux(bytes_total_packet > beatBytes.asUInt, beatBytes.asUInt, bytes_total_packet - beatBytes.asUInt)  //bytes_per_packet(packet_index)
+      //io.resp.bits.block := packet_index
+      //resp_data := resp_data + (tl.d.bits.data << loaded_bits).asUInt
       //loaded_bits := loaded_bits + (bytes_per_packet(packet_index) << 3.U).asUInt
       packet_index := packet_index + 1.U
       when(last_resp_packet) {
         //state := s_idle
-        io.resp.bits.store_en := true.B
+        //io.resp.bits.store_en := true.B
         packet_index := 0.U
       }
     }
 
+    val probe_xactid = RegInit(0.U(log2Up(nXacts).W))
+    xacttracker.io.peek.xactid := probe_xactid
+    //xacttracker.io.peek.pop := last_resp_packet && tl_d_fire
+    xacttracker.io.peek.pop := io.resp.fire
+    io.resp.bits.dest_vaddr := xacttracker.io.peek.entry.mvout_addr
+    io.resp.bits.dest_direct_dram := xacttracker.io.peek.entry.mvout_direct_dram
+    // ToDo: when it is not aligned to 16 bytes
+    io.resp.bits.len := xacttracker.io.peek.entry.bytes_to_read
+    io.resp.bits.data := xacttracker.io.peek.value
+    io.resp.valid := r_state === r_sending_request
+    xacttracker.io.peek.value_ready := false.B
+    xacttracker.io.probe.ready := r_state === r_idle
+    when(r_state === r_idle) {
+      when(xacttracker.io.probe.valid) {
+        probe_xactid := xacttracker.io.probe.xactid
+        r_state := r_sending_request
+      }
+    }.elsewhen(r_state === r_sending_request){
+      xacttracker.io.peek.value_ready := io.resp.ready
+      io.resp.valid := true.B
+      when(io.resp.fire){
+        r_state := r_idle
+      }
+    }
   }
 }
-
 
 // beatBits: dma_busbitwidth
 class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, use_tlb_register_filter: Boolean)
@@ -333,9 +355,9 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
     val req = Reg(new StreamWriteRequest(beatBits, maxBytes))
 
     // TODO use the same register to hold data_blocks and data_single_block, so that this Mux here is not necessary
-    val data_blocks = Reg(Vec(maxBlocks, UInt(beatBits.W)))
-    val data_single_block = Reg(UInt(beatBits.W)) // For data that's just one-block-wide
-    val data = Mux(req.block === 0.U, data_single_block, data_blocks.asUInt)
+    //val data_blocks = Reg(Vec(maxBlocks, UInt(beatBits.W)))
+    //val data_single_block = Reg(UInt(beatBits.W)) // For data that's just one-block-wide
+    //val data = Mux(req.block === 0.U, data_single_block, data_blocks.asUInt)
 
     val bytesSent = Reg(UInt(log2Ceil((dataBytes max maxBytes)+1).W))  // TODO this only needs to count up to (dataBytes/aligned_to), right?
     val bytesLeft = req.len - bytesSent
@@ -358,6 +380,7 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
 
     val vaddr = req.vaddr
     val direct_dram = req.direct_dram
+    val data = req.data
 
     // Select the size and mask of the TileLink request
     class Packet extends Bundle {
@@ -538,13 +561,13 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
       req := io.req.bits
       //req.len := io.req.bits.block * beatBytes.U + io.req.bits.len
 
-      data_single_block := io.req.bits.data
-      data_blocks(io.req.bits.block) := io.req.bits.data
+      //data_single_block := io.req.bits.data
+      //data_blocks(io.req.bits.block) := io.req.bits.data
 
       bytesSent := 0.U
 
-      //state := s_writing_new_block //s_idle
-      state := Mux(io.req.bits.store_en, s_writing_new_block, s_idle)
+      state := s_writing_new_block //s_idle
+      //state := Mux(io.req.bits.store_en, s_writing_new_block, s_idle)
 
     }
 
@@ -623,7 +646,7 @@ class DMA(config: MemcpyConfig)
 
     val dma_pipe_delay = 1 // ToDo
     //val write_issue_q = Queue(reader.module.io.resp)
-    val write_issue_q = Module(new Queue(new StreamReadResponse(aligned_to, dataBits, maxBytes), 2))
+    val write_issue_q = Module(new Queue(new StreamReadResponse(dataBits, maxBytes), 2))
 
     write_issue_q.io.deq.ready := writer.module.io.req.ready
     reader.module.io.resp.ready := write_issue_q.io.enq.ready
@@ -635,8 +658,8 @@ class DMA(config: MemcpyConfig)
     writer.module.io.req.bits.status := req.status
     writer.module.io.req.bits.vaddr := write_issue_q.io.deq.bits.dest_vaddr // fed from reader
     writer.module.io.req.bits.len := write_issue_q.io.deq.bits.len //req.num_bytes
-    writer.module.io.req.bits.block := write_issue_q.io.deq.bits.block
-    writer.module.io.req.bits.store_en := write_issue_q.io.deq.bits.store_en
+    //writer.module.io.req.bits.block := write_issue_q.io.deq.bits.block
+    //writer.module.io.req.bits.store_en := write_issue_q.io.deq.bits.store_en
     writer.module.io.req.bits.direct_dram := write_issue_q.io.deq.bits.dest_direct_dram
 
     io.tlb(0) <> writer.module.io.tlb

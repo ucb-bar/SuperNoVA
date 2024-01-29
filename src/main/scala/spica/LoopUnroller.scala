@@ -60,11 +60,14 @@ class LoopUnroller(config: MemcpyConfig, dma_bitwidth: Int, dma_maxbyte: Int)(im
   val source_align_offset = source_align_next - source_vaddr
   val dest_align_offset = dest_align_next - dest_vaddr
   val min_align_offset = Mux(source_align_offset < dest_align_offset, source_align_offset, dest_align_offset)
+  dontTouch(source_align_offset)
+  dontTouch(dest_align_offset)
+  dontTouch(dest_vaddr_offset)
 
   // ToDo: better parameterize
   if(dma_maxbyte > beat_bytes) {
     // force 2nd, 4th beat position size to beatsize
-    when(source_vaddr_offset(beat_bytes_bit, 0) === 0.U && dest_vaddr_offset(beat_bytes_bit) === 0.U) {
+    when(source_vaddr_offset(beat_bytes_bit, 0) === 0.U && dest_vaddr_offset(beat_bytes_bit, 0) === 0.U) {
     //when(source_vaddr_offset(beat_bytes_bit) =/= 1.U && dest_vaddr_offset(beat_bytes_bit) =/= 1.U) {
       val col_bytes_temp = Mux(col + min_align_offset > max_cols, max_cols - col, min_align_offset)
       col_bytes := Mux(col_bytes_temp > 32.U && col_bytes_temp <= 48.U, 32.U, col_bytes_temp) // no 3 beats
