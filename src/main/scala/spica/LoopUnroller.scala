@@ -40,9 +40,10 @@ class LoopUnroller(config: MemcpyConfig, dma_bitwidth: Int, dma_maxbyte: Int)(im
   val row = RegInit(0.U(iterator_bitwidth.W))
   val col = RegInit(0.U(iterator_bitwidth.W)) // in bytes
 
+  val row_flatten = req.source_stride === req.cols && req.dest_stride === req.cols
   val max_tiles = req.tiles
-  val max_rows = req.rows
-  val max_cols = req.cols
+  val max_rows = Mux(row_flatten, 1.U, req.rows)
+  val max_cols = Mux(row_flatten, req.rows * req.cols, req.cols)
 
   // TODO get rid of the x * max_y multiplications here
   val source_vaddr = req.source_base_vaddr + req.source_tile_offset * tile + req.source_stride * row + col
