@@ -23,6 +23,8 @@ class ChannelConfig(val addr_bitwidth: Int, val state_bitwidth: Int) extends Bun
   val state = UInt(state_bitwidth.W)
   val source_direct_dram = Bool()
   val dest_direct_dram = Bool()
+
+  val num_active_cmd = UInt(4.W) // ToDo: configurable
 }
 
 class MemcpyCmdBundle(data_bitwidth: Int, iterator_bitwidth: Int)(implicit p: Parameters) extends CoreBundle {
@@ -133,6 +135,8 @@ class MemcpyModule (outer: Memcpy)
       cmd_in_deq.ready := true.B
       tlb.io.exp.foreach(_.flush_skip := skip)
       tlb.io.exp.foreach(_.flush_retry := !skip)
+      channel.foreach(_.num_active_cmd := 0.U)
+      channel.foreach(_.state := 0.U)
       //}
       //io.resp <> DontCare
     }.elsewhen(is_config) {
@@ -142,20 +146,30 @@ class MemcpyModule (outer: Memcpy)
       val direct_dram = cmd_in_deq.bits.rs2(63)
       cmd_in_deq.ready := true.B
       when(cmd_in_deq.fire) {
-        when(cmd_in_deq.bits.inst.funct === CONFIG_SOURCE_CMD) {
-          // configuring source
-          channel(ch).source_base_addr := base_addr
-          channel(ch).source_stride := stride
-          channel(ch).state := 0.U // Do we need this?
-          tile_index := 0.U
-          channel(ch).source_direct_dram := direct_dram
-        }.otherwise {
-          // configuring dma
-          channel(ch).dest_base_addr := base_addr
-          channel(ch).dest_stride := stride
-          channel(ch).state := 0.U // Do we need this?
-          tile_index := 0.U
-          channel(ch).dest_direct_dram := direct_dram
+        when(channel(ch).num_active_cmd =/= 0.U){
+          io.resp.valid := true.B
+          io.resp.bits.data := false.B
+          io.resp.bits.rd := cmd_in_deq.bits.inst.rd
+        }
+        .otherwise{
+          io.resp.valid := true.B
+          io.resp.bits.data := true.B
+          io.resp.bits.rd := cmd_in_deq.bits.inst.rd
+          when(cmd_in_deq.bits.inst.funct === CONFIG_SOURCE_CMD) {
+            // configuring source
+            channel(ch).source_base_addr := base_addr
+            channel(ch).source_stride := stride
+            channel(ch).state := 0.U // Do we need this?
+            tile_index := 0.U
+            channel(ch).source_direct_dram := direct_dram
+          }.otherwise {
+            // configuring dma
+            channel(ch).dest_base_addr := base_addr
+            channel(ch).dest_stride := stride
+            channel(ch).state := 0.U // Do we need this?
+            tile_index := 0.U
+            channel(ch).dest_direct_dram := direct_dram
+          }
         }
       }
       //io.resp <> DontCare
@@ -170,8 +184,15 @@ class MemcpyModule (outer: Memcpy)
         io.resp.bits.data := channel(ch).state
         io.resp.bits.rd := cmd_in_deq.bits.inst.rd
       }.otherwise {
-        //io.resp <> DontCare
-        channel(ch).state := cmd_in_deq.bits.rs2
+        io.resp.valid := true.B
+        when(channel(ch).num_active_cmd === 0.U){
+          io.resp.bits.data := true.B
+          //io.resp <> DontCare
+          channel(ch).state := cmd_in_deq.bits.rs2
+        }
+        .otherwise{
+          io.resp.bits.data := false.B
+        }
       }
     }.elsewhen(!raw_cmd_q.io.enq.ready) { // ToDo replace with nuber of filled entries
       // queue full, can't receive any more command
@@ -186,7 +207,9 @@ class MemcpyModule (outer: Memcpy)
       io.resp.bits.rd := cmd_in_deq.bits.inst.rd
       cmd_in_deq.ready := false.B
       raw_cmd_q.io.enq.valid := true.B
+      val ch = (cmd_in_deq.bits.rs1 >> 60).asUInt
       when(raw_cmd_q.io.enq.fire){
+        channel(ch).num_active_cmd := channel(ch).num_active_cmd + 1.U
         cmd_in_deq.ready := true.B
       }
     }
@@ -245,6 +268,7 @@ class MemcpyModule (outer: Memcpy)
   }
   when(state === update){
     channel(curr_channel).state := tile_index + 1.U // previous
+    channel(curr_channel).num_active_cmd := channel(curr_channel).num_active_cmd - 1.U
     state := idle
   }
 
