@@ -160,14 +160,14 @@ class MemcpyModule (outer: Memcpy)
             channel(ch).source_base_addr := base_addr
             channel(ch).source_stride := stride
             channel(ch).state := 0.U // Do we need this?
-            tile_index := 0.U
+            //tile_index := 0.U
             channel(ch).source_direct_dram := direct_dram
           }.otherwise {
             // configuring dma
             channel(ch).dest_base_addr := base_addr
             channel(ch).dest_stride := stride
             channel(ch).state := 0.U // Do we need this?
-            tile_index := 0.U
+            //tile_index := 0.U
             channel(ch).dest_direct_dram := direct_dram
           }
         }
@@ -270,6 +270,7 @@ class MemcpyModule (outer: Memcpy)
     channel(curr_channel).state := tile_index + 1.U // previous
     channel(curr_channel).num_active_cmd := channel(curr_channel).num_active_cmd - 1.U
     state := idle
+    tile_index := 0.U
   }
 
   raw_cmd.ready := state === idle //req_issuer.io.req.ready && !outer.dma.module.io.busy
