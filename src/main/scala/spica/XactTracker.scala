@@ -75,6 +75,7 @@ class XactTracker(nXacts: Int, beatBits: Int, maxReqBytes: Int, max_blocks: Int)
     val alloc = Flipped(new XactTrackerAllocIO(nXacts, beatBits, maxReqBytes, max_blocks))
     val peek = new XactTrackerPeekIO(nXacts, beatBits, maxReqBytes)
     val probe = new XactTrackerProbeIO(nXacts)
+    val memset = Input(Bool())
     val busy = Output(Bool())
     val is_free = Output(Bool())
   })
@@ -82,7 +83,7 @@ class XactTracker(nXacts: Int, beatBits: Int, maxReqBytes: Int, max_blocks: Int)
 
   val entries = Reg(Vec(nXacts, UDValid(new XactTrackerEntry(maxShift, maxReqBytes, nXacts))))
   val value_entries = Reg(Vec(nXacts, UDValid(new XactTrackerReadResponse(beatBits, maxReqBytes, max_blocks))))
-
+    
   val free_entry = MuxCase((nXacts-1).U, entries.zipWithIndex.map { case (e, i) => !e.valid -> i.U })
   io.alloc.ready := !entries.map(_.valid).reduce(_ && _)
   io.alloc.xactid := free_entry
@@ -112,6 +113,11 @@ class XactTracker(nXacts: Int, beatBits: Int, maxReqBytes: Int, max_blocks: Int)
   when (io.alloc.fire()) {
     entries(free_entry).valid := true.B
     entries(free_entry).bits := io.alloc.entry
+    // memsetting to 0
+    when(io.memset){
+      //value_entries(free_entry).bits.data := 0.U
+      value_entries(free_entry).valid := io.alloc.store_en
+    }
   }
   when(io.alloc.value_valid){
     value_entries(io.alloc.value_xactid).bits.data(io.alloc.blockid) := (io.alloc.value >> entries(io.alloc.value_xactid).bits.shift * 8.U).asUInt

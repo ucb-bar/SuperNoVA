@@ -92,6 +92,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     val req = Reg(new StreamReadRequest())
     val vaddr = req.vaddr
     val direct_dram = req.direct_dram
+    val memset = vaddr === 0.U
 
     val bytesRequested = Reg(UInt(log2Ceil(maxBytes).W)) // TODO this only needs to count up to (dataBytes/aligned_to), right?
     val bytesLeft = req.len - bytesRequested // len is byte length
@@ -134,7 +135,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     val read_packet = read_packets.reduce { (acc, p) =>
       Mux(p.bytes_read > acc.bytes_read, p, acc)
     }
-    val read_vaddr = read_packet.vaddr
+    val read_vaddr = Mux(memset, 0.U, read_packet.vaddr)
     val read_lg_size = read_packet.lg_size
     val read_bytes_read = read_packet.bytes_read
     val read_shift = read_packet.shift
@@ -168,6 +169,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     reserve.entry.bytes_to_read := RegEnableThru(read_bytes_read, untranslated_a.fire)
     reserve.entry.mvout_addr := RegEnableThru(req.dest_vaddr, untranslated_a.fire)
     reserve.entry.mvout_direct_dram := RegEnableThru(req.dest_direct_dram, untranslated_a.fire)
+    xacttracker.io.memset := memset 
     /*
     when(untranslated_a.fire){
       reserve.entry.shift := read_shift
@@ -181,6 +183,9 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     val tlb_arb = Module(new Arbiter(new TLBundleAWithInfo, 2))
     tlb_arb.io.in(0) <> retry_a
     tlb_arb.io.in(1) <> untranslated_a
+    when(memset){
+      tlb_arb.io.in(1).valid := false.B
+    }
 
     //val tlb_q = Module(new Queue(new TLBundleAWithInfo, 1, pipe=true))
     tlb_q.io.enq <> tlb_arb.io.out
@@ -217,6 +222,9 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     //val bytes_per_packet = Reg(Vec(max_blocks, UInt(log2Up(beatBytes+1).W)))
     //val bytes_total_packet = RegInit(0.U(log2Up(maxBytes+1).W))
 
+    val last_resp_packet = WireInit(edge.last(tl.d))
+    val tl_d_fire = WireInit(tl.d.fire)
+    reserve.store_en := last_resp_packet && tl_d_fire
     val packet_index = RegInit(0.U(log2Up(max_blocks+1).W))
     when (untranslated_a.fire) {
       val next_vaddr = req.vaddr + read_bytes_read // send_size
@@ -233,6 +241,9 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
         //state_machine_ready_for_req := true.B
         state := s_idle //s_resp_block
         //packet_index := 0.U
+        when(memset){
+          reserve.store_en := true.B
+        }
       }
     }
 
@@ -254,8 +265,8 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     io.resp.bits.dest_direct_dram := false.B
 
 
-    val last_resp_packet = WireInit(edge.last(tl.d))
-    val tl_d_fire = WireInit(tl.d.fire)
+    //val last_resp_packet = WireInit(edge.last(tl.d))
+    //val tl_d_fire = WireInit(tl.d.fire)
     dontTouch(tl_d_fire)
     dontTouch(last_resp_packet)
     dontTouch(io.resp.ready)
@@ -277,7 +288,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     reserve.value_valid := tl.d.valid
     reserve.value_xactid := tl.d.bits.source
     reserve.value := (tl.d.bits.data) // >> (xacttracker.io.peek.entry.shift * 8.U)).asUInt
-    reserve.store_en := last_resp_packet && tl_d_fire
+    //reserve.store_en := last_resp_packet && tl_d_fire
     reserve.blockid := packet_index
 
     when(tl_d_fire){
