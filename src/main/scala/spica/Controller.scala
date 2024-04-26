@@ -215,7 +215,7 @@ class MemcpyModule (outer: Memcpy)
     }
   }
   raw_cmd_q.io.enq.bits := cmd_in_deq.bits
-  dontTouch(io.resp)
+  //dontTouch(io.resp)
 
 
   val (idle :: memcpying :: update :: Nil) = Enum(3)

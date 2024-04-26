@@ -3,7 +3,6 @@ package spica
 
 import chisel3._
 import chisel3.util._
-import chisel3.experimental.DataMirror
 
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.diplomacy.{IdRange, LazyModule, LazyModuleImp}
@@ -128,7 +127,7 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
       packet.bytes_read := minOf(s.U - vaddr_offset, bytesLeft)
       packet.shift := vaddr_offset
       packet.vaddr := vaddr_aligned_to_size
-      dontTouch(packet)
+      //dontTouch(packet)
 
       packet
     }
@@ -149,7 +148,8 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     )._2
 
     class TLBundleAWithInfo extends Bundle {
-      val tl_a = DataMirror.internal.chiselTypeClone[TLBundleA](tl.a.bits)
+      //val tl_a = DataMirror.internal.chiselTypeClone[TLBundleA](tl.a.bits)
+      val tl_a = tl.a.bits.cloneType
       val vaddr = Output(UInt(vaddrBits.W))
       val status = Output(new MStatus)
     }
@@ -204,12 +204,12 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
     val translate_q = Module(new Queue(new TLBundleAWithInfo, 1, pipe=true))
     translate_q.io.enq <> tlb_q.io.deq
     translate_q.io.deq.ready := true.B
-    dontTouch(translate_q.io.deq.ready)
-    dontTouch(translate_q.io.deq.valid)
-    dontTouch(translate_q.io.enq.ready)
-    dontTouch(translate_q.io.enq.valid)
+    //dontTouch(translate_q.io.deq.ready)
+    //dontTouch(translate_q.io.deq.valid)
+    //dontTouch(translate_q.io.enq.ready)
+    //dontTouch(translate_q.io.enq.valid)
     val translate_q_fire = WireInit(translate_q.io.deq.fire)
-    dontTouch(translate_q_fire)
+    //dontTouch(translate_q_fire)
 
     retry_a.valid := translate_q.io.deq.valid && (io.tlb.resp.miss || !tl.a.ready)
     retry_a.bits := translate_q.io.deq.bits
@@ -267,9 +267,9 @@ class StreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int,
 
     //val last_resp_packet = WireInit(edge.last(tl.d))
     //val tl_d_fire = WireInit(tl.d.fire)
-    dontTouch(tl_d_fire)
-    dontTouch(last_resp_packet)
-    dontTouch(io.resp.ready)
+    //dontTouch(tl_d_fire)
+    //dontTouch(last_resp_packet)
+    //dontTouch(io.resp.ready)
     when (state === s_idle){
       //bytes_per_packet := VecInit(Seq.fill(max_blocks)(0.U))
       //bytes_total_packet := 0.U
@@ -382,8 +382,8 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
     val xactBusy_add = Mux(xactBusy_fire, (1.U << xactId).asUInt, 0.U)
     val xactBusy_remove = ~Mux(tl.d.fire, (1.U << tl.d.bits.source).asUInt, 0.U)
     xactBusy := (xactBusy | xactBusy_add) & xactBusy_remove.asUInt
-    dontTouch(xactBusy_add)
-    dontTouch(xactBusy_remove)
+    //dontTouch(xactBusy_add)
+    //dontTouch(xactBusy_remove)
 
     val state_machine_ready_for_req = WireInit(state === s_idle)
     io.req.ready := state_machine_ready_for_req
@@ -488,7 +488,8 @@ class StreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, aligned_to: Int, u
     )._2
 
     class TLBundleAWithInfo extends Bundle {
-      val tl_a = DataMirror.internal.chiselTypeClone[TLBundleA](tl.a.bits)
+      //val tl_a = DataMirror.internal.chiselTypeClone[TLBundleA](tl.a.bits)
+      val tl_a = tl.a.bits.cloneType
       val vaddr = Output(UInt(vaddrBits.W))
       val status = Output(new MStatus)
     }
