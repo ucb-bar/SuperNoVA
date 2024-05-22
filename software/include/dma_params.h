@@ -15,13 +15,10 @@
 
 // Scratchpad configuration
 #define SPAD_BANK_NUM 4
-#define SPAD_TOTAL_BYTES 2048
+#define SPAD_TOTAL_BYTES (2048*1024)
 #define SPAD_BANK_BYTES (SPAD_TOTAL_BYTES/SPAD_BANK_NUM)
-#define BASE_ADDR 0x70000000 
 
-typedef int8_t elem_t;
-static const elem_t elem_t_max = 127;
-static const elem_t elem_t_min = -128;
+#define BASE_ADDR 0x4000000
+#define PageSize 4096
 
-#define byte_align(byte) __attribute__((aligned(byte*sizeof(elem_t))))
 #endif // DMA_PARAMS_H
