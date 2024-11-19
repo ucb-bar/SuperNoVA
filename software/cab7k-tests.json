@@ -1,0 +1,9 @@
+{
+  "name" : "cab7k-ra-tests",
+  "workdir" : ".",
+  "base" : "br-base.json",
+  "overlay" : "overlay",
+  "command": "/root/run-tests-cab7k.sh",
+  "rootfs-size" : "32GiB",
+  "spike-args" : "--extension=gemmini"
+}

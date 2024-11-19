@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "rocc.h"
 
 #define read_csr(reg) ({ unsigned long __tmp; \
   asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \

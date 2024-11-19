@@ -9,12 +9,18 @@ echo "Building slam-rocc-tests benchmark"
 RDIR=$(pwd)
 FSIMSW=/scratch/seah/chipyard-supernova/software/firemarshal/
 #cd gemmini-rocc-tests
-#./build.sh
-#cp -r build/* ../overlay/root/
+./build.sh
+cp -r build/* overlay/root/
 cd $FSIMSW
-rm images/slam-tests*
-./marshal -v --workdir $RDIR build slam-tests.json
-./marshal -v --workdir $RDIR install slam-tests.json
+#rm images/slam-tests*
+#./marshal -v --workdir $RDIR build m3500-tests.json
+#./marshal -v --workdir $RDIR install m3500-tests.json
+./marshal -v --workdir $RDIR build cab7k-tests.json
+./marshal -v --workdir $RDIR install cab7k-tests.json
+#./marshal -v --workdir $RDIR build sphere-tests.json
+#./marshal -v --workdir $RDIR install sphere-tests.json
+#./marshal -v --workdir $RDIR build cab464-tests.json
+#./marshal -v --workdir $RDIR install cab464-tests.json
 #this is for spike
 #./marshal -i -v --workdir $RDIR build gemmini-tests.json
 cd $RDIR
