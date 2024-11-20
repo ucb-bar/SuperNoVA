@@ -14,8 +14,8 @@ FSIMSW=../../../software/firemarshal/
 #rm -rf build/slam/*
 #cd build
 #cp ../../slam/* build/slam/*
-#cp -r build/* overlay/root/
-cp ../../ae-binary/*-linux build/slam/*
+cp ../../ae-binary/*-linux build/slam/.
+cp -r build/* overlay/root/
 cd $FSIMSW
 #rm images/slam-tests*
 ./marshal -v --workdir $RDIR build m3500-tests.json
