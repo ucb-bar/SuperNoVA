@@ -13,14 +13,14 @@ FSIMSW=/scratch/seah/chipyard-supernova/software/firemarshal/
 cp -r build/* overlay/root/
 cd $FSIMSW
 #rm images/slam-tests*
-#./marshal -v --workdir $RDIR build m3500-tests.json
-#./marshal -v --workdir $RDIR install m3500-tests.json
+./marshal -v --workdir $RDIR build m3500-tests.json
+./marshal -v --workdir $RDIR install m3500-tests.json
 ./marshal -v --workdir $RDIR build cab7k-tests.json
 ./marshal -v --workdir $RDIR install cab7k-tests.json
-#./marshal -v --workdir $RDIR build sphere-tests.json
-#./marshal -v --workdir $RDIR install sphere-tests.json
-#./marshal -v --workdir $RDIR build cab464-tests.json
-#./marshal -v --workdir $RDIR install cab464-tests.json
+./marshal -v --workdir $RDIR build sphere-tests.json
+./marshal -v --workdir $RDIR install sphere-tests.json
+./marshal -v --workdir $RDIR build cab464-tests.json
+./marshal -v --workdir $RDIR install cab464-tests.json
 #this is for spike
 #./marshal -i -v --workdir $RDIR build gemmini-tests.json
 cd $RDIR

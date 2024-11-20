@@ -152,9 +152,9 @@ const int timestep_start = 25;
 
 const int num_timesteps = 139;
 
-#define MAX_WORKSPACE_NEEDED 5514676
+#define MAX_WORKSPACE_NEEDED 4773124
 
-#define MAX_NNODE 343
+#define MAX_NNODE 348
 
 #define MAX_FACTOR_HEIGHT 7
 
