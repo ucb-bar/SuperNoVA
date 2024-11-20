@@ -20,7 +20,7 @@
 #include "include/gemmini_testutils.h"
 #include "include/cholesky.h"
 //#include "datasets/incremental_CAB1_steps-464_period-1/incremental_dataset.h"
-#include "ra-isam2/timing/baremetal_tests/RA_CAB7000-smallnoise_num_threads-1_steps-2-3000_period-25/incremental_dataset.h"
+#include "datasets/RA_CAB7000-smallnoise_num_threads-1_steps-2-3000_period-25/incremental_dataset.h"
 //#include "datasets/RA_CAB7000_num_threads-1_steps-2-3000_period-25/incremental_dataset.h"
 pthread_barrier_t barrier_global;
 pthread_mutex_t ex_queue_mutex;

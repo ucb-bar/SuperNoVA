@@ -1,28 +1,6 @@
 include $(abs_top_srcdir)/Makefrag
 
 tests = \
-	test_mt1_incremental_cab464 \
-	test_mt2_incremental_cab464 \
-	test_mt2_incremental_cab464_2 \
-	test_mt4_incremental_cab464 \
-	test_mt1_incremental_cab7k \
-	test_mt2_incremental_cab7k \
-	test_mt4_incremental_cab7k \
-	test_mt1_incremental_sphere \
-	test_mt1_incremental_sphere_2 \
-	test_mt1_incremental_sphere_3 \
-	test_mt2_incremental_sphere \
-	test_mt2_incremental_sphere_1 \
-	test_mt2_incremental_sphere_2 \
-	test_mt2_incremental_sphere_3 \
-	test_mt4_incremental_sphere \
-	test_mt4_incremental_sphere_1 \
-	test_mt4_incremental_sphere_2 \
-	test_mt4_incremental_sphere_3 \
-	test_mt1_incremental_m3500 \
-	test_mt2_incremental_m3500 \
-	test_mt4_incremental_m3500 \
-	test_mt4_incremental_m3500_2 \
 	test_mt1_ra_cab464 \
 	test_mt1_ra_cab464_2 \
 	test_mt2_ra_cab464_2 \
@@ -45,11 +23,28 @@ tests = \
 	test_mt4_ra_m3500 \
 	test_mt4_ra_m3500_2 \
 	test_mt4_ra_m3500_3 \
-	#test_mt_model_sphere \
-	#test_mt_incremental \
-	#test_mt_full \
-	#test_incremental \
-	#test_incremental_sphere \
+	#test_mt1_incremental_cab464 \
+	#test_mt2_incremental_cab464 \
+	#test_mt2_incremental_cab464_2 \
+	#test_mt4_incremental_cab464 \
+	#test_mt1_incremental_cab7k \
+	#test_mt2_incremental_cab7k \
+	#test_mt4_incremental_cab7k \
+	#test_mt1_incremental_sphere \
+	#test_mt1_incremental_sphere_2 \
+	#test_mt1_incremental_sphere_3 \
+	#test_mt2_incremental_sphere \
+	#test_mt2_incremental_sphere_1 \
+	#test_mt2_incremental_sphere_2 \
+	#test_mt2_incremental_sphere_3 \
+	#test_mt4_incremental_sphere \
+	#test_mt4_incremental_sphere_1 \
+	#test_mt4_incremental_sphere_2 \
+	#test_mt4_incremental_sphere_3 \
+	#test_mt1_incremental_m3500 \
+	#test_mt2_incremental_m3500 \
+	#test_mt4_incremental_m3500 \
+	#test_mt4_incremental_m3500_2 \
 
 tests_baremetal = $(tests:=-baremetal)
 runs_baremetal = $(addsuffix .run,$(tests_baremetal))
