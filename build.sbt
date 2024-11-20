@@ -1,6 +1,6 @@
 // See README.md for license details.
 
-name := "spica"
+name := "supernova"
 
 version := "3.1.0"
 

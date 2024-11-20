@@ -7,10 +7,15 @@ cat test_output.txtis built.
 # this script may be called multiple times.
 echo "Building slam-rocc-tests benchmark"
 RDIR=$(pwd)
-FSIMSW=/scratch/seah/chipyard-supernova/software/firemarshal/
-#cd gemmini-rocc-tests
-./build.sh
-cp -r build/* overlay/root/
+FSIMSW=../../../software/firemarshal/
+#FSIMSW=/scratch/seah/chipyard-supernova/software/firemarshal/
+#./build.sh
+# done prebuilt from setup script
+#rm -rf build/slam/*
+#cd build
+#cp ../../slam/* build/slam/*
+#cp -r build/* overlay/root/
+cp ../../ae-binary/*-linux build/slam/*
 cd $FSIMSW
 #rm images/slam-tests*
 ./marshal -v --workdir $RDIR build m3500-tests.json
