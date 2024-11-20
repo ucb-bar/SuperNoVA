@@ -19,7 +19,7 @@
 #define NUM_CORE 1 // number of multithreading
 #include "include/gemmini_testutils.h"
 #include "include/cholesky.h"
-#include "ra-isam2/timing/baremetal_tests/incremental_sphere2_steps-2-2000_period-25/incremental_dataset.h"
+#include "datasets/incremental_sphere2_steps-2-2000_period-25/incremental_dataset.h"
 //#include "datasets/incremental_sphere2500_steps-2000_period-25/incremental_dataset.h"
 //#include "datasets/RA_sphere2500_num_threads-4_steps-2-2000_period-25/incremental_dataset.h"
 pthread_barrier_t barrier_global;

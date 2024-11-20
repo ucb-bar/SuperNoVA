@@ -6,7 +6,6 @@ tests = \
 	test_mt2_incremental_cab464_2 \
 	test_mt4_incremental_cab464 \
 	test_mt1_incremental_cab7k \
-	test_mt1_incremental_cab7k_2 \
 	test_mt2_incremental_cab7k \
 	test_mt4_incremental_cab7k \
 	test_mt1_incremental_sphere \
@@ -42,7 +41,10 @@ tests = \
 	test_mt4_ra_sphere \
 	test_mt1_ra_m3500 \
 	test_mt2_ra_m3500 \
+	test_mt2_ra_m3500_2 \
 	test_mt4_ra_m3500 \
+	test_mt4_ra_m3500_2 \
+	test_mt4_ra_m3500_3 \
 	#test_mt_model_sphere \
 	#test_mt_incremental \
 	#test_mt_full \

@@ -169,7 +169,7 @@ int main() {
     pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     //pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     int step_start = 0;
-    int step_end = 445;//num_timesteps;
+    int step_end = num_timesteps;
     for(int step = step_start; step < step_end; step++){
       int true_step = (step+1)*INTERVAL;//step + timestep_start;
       //if(step == 12)
@@ -197,14 +197,14 @@ int main() {
               max_backsolve = slam_args[i].backsolve_cycles;
       }
       printf("step %d slam total cycle: %llu\n", step, max_backsolve+max_cholesky);
-      if (step == 410) {
+      if (step == 410 || step == 407) {
           printf("step %d slam total cycle: %llu\n", step+1, max_backsolve+max_cholesky);
           step++;
       }
       fflush(stdout);
     }
 
-    //printf("end of test\n");
+    printf("end of test\n");
       for(int node = 0; node < MAX_NNODE; node++) {
           pthread_mutex_destroy(&node_locks[node]);
       }

@@ -169,7 +169,7 @@ int main() {
 
     pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     //pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
-    int step_start = 95;
+    int step_start = 97;
     int step_end = num_timesteps;
     for(int step = step_start; step < step_end; step++){
       int true_step = (step+1)*INTERVAL;//step + timestep_start;

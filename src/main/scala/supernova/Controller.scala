@@ -1,5 +1,5 @@
 
-package spica
+package supernova
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
@@ -60,7 +60,7 @@ class Memcpy(val config: MemcpyConfig)
     opcodes = config.opcodes,
     nPTWPorts = if (config.use_shared_tlb) 1 else 2) {
 
-  val xLen = p(XLen)
+  val xLen = p(TileKey).core.xLen
   val dma = LazyModule(new DMA(config))
   //val dma = LazyModule(new DMA(config, config.dma_buswidth, config.aligned_to, config.use_tlb_register_filter))
 

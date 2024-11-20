@@ -1,5 +1,5 @@
 
-package spica 
+package supernova 
 
 import chisel3._
 import chisel3.util._

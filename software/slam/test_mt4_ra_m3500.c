@@ -170,7 +170,7 @@ int main() {
     pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     //pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     int step_start = 0;
-    int step_end = num_timesteps;
+    int step_end = 96;//num_timesteps;
     for(int step = step_start; step < step_end; step++){
       int true_step = (step+1)*INTERVAL;//step + timestep_start;
       //if(step == 12)
@@ -201,7 +201,7 @@ int main() {
       fflush(stdout);
     }
 
-    printf("end of test\n");
+    //printf("end of test\n");
       for(int node = 0; node < MAX_NNODE; node++) {
           pthread_mutex_destroy(&node_locks[node]);
       }

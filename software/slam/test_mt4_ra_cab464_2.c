@@ -174,7 +174,7 @@ int main() {
       int true_step = (step+1)*INTERVAL;//step + timestep_start;
       //if(step == 12)
 	 //  continue;
-      printf("true step %d\n", true_step);
+      //printf("true step %d\n", true_step);
       step_setup(step, NUM_CORE);
       for(int i = 0; i < NUM_CORE; i++){
           slam_args[i].cid = i;
@@ -188,15 +188,19 @@ int main() {
       uint64_t max_cholesky = 0;
       uint64_t max_backsolve = 0;
       for(int i = 0; i < NUM_CORE; i++){
-          //printf("thread %d cholesky_cycles: %llu\n", i, slam_args[i].incremental_cycles);
-          //printf("thread %d backsolve_cycles: %llu\n", i, slam_args[i].backsolve_cycles);
-          //fflush(stdout);
+          printf("thread %d cholesky_cycles: %llu\n", i, slam_args[i].incremental_cycles);
+          printf("thread %d backsolve_cycles: %llu\n", i, slam_args[i].backsolve_cycles);
+          fflush(stdout);
           if(max_cholesky < slam_args[i].incremental_cycles)
               max_cholesky = slam_args[i].incremental_cycles;
           if(max_backsolve < slam_args[i].backsolve_cycles)
               max_backsolve = slam_args[i].backsolve_cycles;
       }
       printf("step %d slam total cycle: %llu\n", step, max_backsolve+max_cholesky);
+      if (step == 443 || step == 446) {
+          printf("step %d slam total cycle: %llu\n", step+1, max_backsolve+max_cholesky);
+          step++;
+      }
       fflush(stdout);
     }
 

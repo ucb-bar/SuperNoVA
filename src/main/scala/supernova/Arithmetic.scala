@@ -1,7 +1,7 @@
 // A simple type class for Chisel datatypes that can add and multiply. To add your own type, simply create your own:
 //     implicit MyTypeArithmetic extends Arithmetic[MyType] { ... }
 
-package spica
+package supernova
 
 import chisel3._
 import chisel3.util._

@@ -1,9 +1,9 @@
-package spica
+package supernova
 
 import chisel3._
 import chisel3.util._
 import freechips.rocketchip.tile.CoreBundle
-import spica.Util.UDValid
+import supernova.Util.UDValid
 import midas.targetutils.SynthesizePrintf
 import org.chipsalliance.cde.config.Parameters
 

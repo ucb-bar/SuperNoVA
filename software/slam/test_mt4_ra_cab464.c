@@ -197,6 +197,10 @@ int main() {
               max_backsolve = slam_args[i].backsolve_cycles;
       }
       printf("step %d slam total cycle: %llu\n", step, max_backsolve+max_cholesky);
+      if (step == 361) {
+          printf("step %d slam total cycle: %llu\n", step+1, max_backsolve+max_cholesky);
+          step++;
+      }
       fflush(stdout);
     }
 

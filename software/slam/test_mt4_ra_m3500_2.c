@@ -16,12 +16,12 @@
 #define ReRoCC 1
 #define SPICA 1
 #define MATADD ReRoCC
-#define NUM_CORE 1 // number of multithreading
+#define NUM_CORE 4 // number of multithreading
 #include "include/gemmini_testutils.h"
 #include "include/cholesky.h"
-#include "datasets/incremental_sphere2_steps-2-2000_period-25/incremental_dataset.h"
-//#include "datasets/incremental_sphere2500_steps-2000_period-25/incremental_dataset.h"
-//#include "datasets/RA_sphere2500_num_threads-4_steps-2-2000_period-25/incremental_dataset.h"
+//#include "datasets/incremental_CAB1_steps-464_period-1/incremental_dataset.h"
+#include "ra-isam2/timing/baremetal_tests/RA_M3500a_num_threads-4_steps-2-3499_period-25/incremental_dataset.h"
+//#include "datasets/RA_CAB7000_num_threads-4_steps-2-3000_period-25/incremental_dataset.h"
 pthread_barrier_t barrier_global;
 pthread_mutex_t ex_queue_mutex;
 #include "include/workload.h"
@@ -169,8 +169,8 @@ int main() {
 
     pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     //pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
-    int step_start = 63;
-    int step_end = num_timesteps;
+    int step_start = 96;
+    int step_end = 108;//num_timesteps;
     for(int step = step_start; step < step_end; step++){
       int true_step = (step+1)*INTERVAL;//step + timestep_start;
       //if(step == 12)
@@ -189,9 +189,9 @@ int main() {
       uint64_t max_cholesky = 0;
       uint64_t max_backsolve = 0;
       for(int i = 0; i < NUM_CORE; i++){
-          printf("thread %d cholesky_cycles: %llu\n", i, slam_args[i].incremental_cycles);
-          printf("thread %d backsolve_cycles: %llu\n", i, slam_args[i].backsolve_cycles);
-          fflush(stdout);
+          //printf("thread %d cholesky_cycles: %llu\n", i, slam_args[i].incremental_cycles);
+          //printf("thread %d backsolve_cycles: %llu\n", i, slam_args[i].backsolve_cycles);
+          //fflush(stdout);
           if(max_cholesky < slam_args[i].incremental_cycles)
               max_cholesky = slam_args[i].incremental_cycles;
           if(max_backsolve < slam_args[i].backsolve_cycles)

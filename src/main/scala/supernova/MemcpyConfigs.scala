@@ -1,5 +1,5 @@
 
-package spica 
+package supernova 
 
 import scala.math.{max, pow, sqrt}
 import chisel3._

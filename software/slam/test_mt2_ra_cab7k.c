@@ -170,7 +170,7 @@ int main() {
     pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     //pthread_barrier_init(&barrier_slam, NULL, NUM_CORE);
     int step_start = 0;
-    int step_end = 95;//num_timesteps;
+    int step_end = 97;//num_timesteps;
     for(int step = step_start; step < step_end; step++){
       int true_step = (step+1)*INTERVAL;//step + timestep_start;
       //if(step == 12)
@@ -198,6 +198,10 @@ int main() {
               max_backsolve = slam_args[i].backsolve_cycles;
       }
       printf("step %d slam total cycle: %llu\n", step, max_backsolve+max_cholesky);
+      if (step == 95) {
+          printf("step %d slam total cycle: %llu\n", step+1, max_backsolve+max_cholesky);
+          step++;
+      }
       fflush(stdout);
     }
 
