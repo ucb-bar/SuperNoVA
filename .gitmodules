@@ -6,4 +6,4 @@
 	url = https://github.com/IBM/rocc-software.git
 [submodule "software/ra-isam2"]
 	path = software/ra-isam2
-	url = git@github.com:ucb-bar/ra-isam2.git
+	url = https://github.com/ucb-bar/ra-isam2.git
