@@ -8,16 +8,14 @@ cat test_output.txtis built.
 echo "Building slam-rocc-tests benchmark"
 RDIR=$(pwd)
 FSIMSW=../../../software/firemarshal/
-#FSIMSW=/scratch/seah/chipyard-supernova/software/firemarshal/
+# using newly built binary
 #./build.sh
-# done prebuilt from setup script
 #rm -rf build/slam/*
 #cd build
 #cp ../../slam/* build/slam/*
 cp ../../ae-binary/*-linux build/slam/.
 cp -r build/* overlay/root/
 cd $FSIMSW
-#rm images/slam-tests*
 ./marshal -v --workdir $RDIR build m3500-tests.json
 ./marshal -v --workdir $RDIR install m3500-tests.json
 ./marshal -v --workdir $RDIR build cab7k-tests.json
@@ -26,6 +24,4 @@ cd $FSIMSW
 ./marshal -v --workdir $RDIR install sphere-tests.json
 ./marshal -v --workdir $RDIR build cab464-tests.json
 ./marshal -v --workdir $RDIR install cab464-tests.json
-#this is for spike
-#./marshal -i -v --workdir $RDIR build gemmini-tests.json
 cd $RDIR
