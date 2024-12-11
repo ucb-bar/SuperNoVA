@@ -8,11 +8,9 @@ cat test_output.txtis built.
 echo "Building slam-rocc-tests benchmark"
 RDIR=$(pwd)
 FSIMSW=../../../software/firemarshal/
-# using newly built binary
+# to use newly built binary
 #./build.sh
-#rm -rf build/slam/*
-#cd build
-#cp ../../slam/* build/slam/*
+# to use provided binary
 cp ../../ae-binary/*-linux build/slam/.
 cp -r build/* overlay/root/
 cd $FSIMSW
