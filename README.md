@@ -1,5 +1,5 @@
 # SuperNoVA
-
+Camera-ready version: [Link](https://seahk.github.io/data/supernova_asplos.pdf)
 
 ## Citing SuperNoVA
 If SuperNoVA helps you in your research, you are encouraged to cite our paper. Here is an example bibtex:
